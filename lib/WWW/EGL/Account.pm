@@ -91,7 +91,12 @@ sub auth {
       GET($LOGIN_FRONTEND.'/api/location', 'X-Requested-With' => 'XMLHttpRequest', Referer => $LOGIN_FRONTEND.'/login'), sub {
         $self->authenticate_request(), sub {
           $self->analytics_request(), sub {
-            my $strategyFlags = 'guardianEmailVerifyEnabled=false;guardianEmbeddedDocusignEnabled=true;registerEmailPreVerifyEnabled=false;unrealEngineGamingEula=true';
+            my $strategyFlags = join(';',qw(
+              guardianEmailVerifyEnabled=false
+              guardianEmbeddedDocusignEnabled=true
+              registerEmailPreVerifyEnabled=false
+              unrealEngineGamingEula=true
+            ));
             return $self->xsrf($strategyFlags,sub {
               return $_[0]->stash->{token} = $self->token;
             });

@@ -2,6 +2,7 @@
 requires 'Cookie::Baker', '0.11';
 requires 'HTTP::Cookies', '6.08';
 requires 'LWP', '6.43';
+requires 'LWP::Protocol::https', '6.07';
 requires 'Moo', '2.003006';
 
 on test => sub {
