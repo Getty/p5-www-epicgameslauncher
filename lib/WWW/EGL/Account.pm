@@ -21,6 +21,7 @@ use Carp qw( croak );
 our $LOGIN_FRONTEND = 'https://www.epicgames.com/id';
 our $OAUTH_TOKEN = 'https://account-public-service-prod03.ol.epicgames.com/account/api/oauth/token';
 our $ACCOUNT = 'https://account-public-service-prod03.ol.epicgames.com/account/api/public/account';
+our $MARKETPLACE = 'https://www.unrealengine.com/marketplace/api';
 
 our $EPIC_LAUNCHER_AUTHORIZATION = 'MzQ0NmNkNzI2OTRjNGE0NDg1ZDgxYjc3YWRiYjIxNDE6OTIwOWQ0YTVlMjVhNDU3ZmI5YjA3NDg5ZDMxM2I0MWE=';
 
@@ -87,11 +88,6 @@ sub xsrf {
   };
 }
 
-sub send_twofactor {
-  my ( $self, $twofactor_method, $twofactor, $strategyFlags, $done ) = @_;
-  return 
-}
-
 sub login {
   my ( $self, $email, $password, $twofactor, $strategyFlags, $done ) = @_;
   return POST($LOGIN_FRONTEND.'/api/login', [
@@ -106,7 +102,7 @@ sub login {
     } elsif ($code == 431) {
       my $data = decode_json($_[1]->content);
       if (!$twofactor) {
-        croak "Auth error: ".$data->{metadata}->{message};
+        croak "Login error: ".$data->{metadata}->{message};
       }
       my $twofactor_method = $data->{metadata}->{twoFactorMethod};
       return POST($LOGIN_FRONTEND.'/api/login/mfa', [
@@ -114,8 +110,10 @@ sub login {
         method => $twofactor_method,
         rememberDevice => 'false',
       ], 'X-XSRF-TOKEN' => $self->token), sub { return $done->(@_) };
+    } elsif ($code == 200) {
+      return $done->($_[0]);
     }
-    croak "Unknown auth error: ".$_[1]->content." (".$code.")";
+    croak "Unknown login error: ".$_[1]->content." (".$code.")";
   };
 }
 
@@ -127,6 +125,19 @@ sub me {
       return $_[0]->set_result($data);
     } else {
       croak "Unkown error while fetching me: ".$_[1]->content." (".$_[1]->code.")";
+    }
+  });
+}
+
+sub vault {
+  my ( $self ) = @_;
+  return WWW::EGL::Request->new( GET($MARKETPLACE.'/assets/vault', Authorization => $self->token_type.' '.$self->access_token ), sub {
+    use DDP; p(@_);
+    if ($_[1]->code == 200) {
+      my $data = decode_json($_[1]->content);
+      return $_[0]->set_result($data);
+    } else {
+      croak "Unkown error while fetching vault: ".$_[1]->content." (".$_[1]->code.")";
     }
   });
 }
@@ -171,12 +182,12 @@ sub auth {
                               in_app_id => $data->{in_app_id},
                               device_id => $data->{device_id},
                             });
-                            return $_[0]->set_result(1);
+                            return $_[0]->set_result($self->auth_data);
                           }
-                          croak "Unkown auth error: ".$_[1]->content." (".$_[1]->code.")";
+                          croak "Unknown oauth error: ".$_[1]->content." (".$_[1]->code.")";
                         };
                       }
-                      croak "Unkown auth error: ".$_[1]->content." (".$_[1]->code.")";
+                      croak "Unknown auth error: ".$_[1]->content." (".$_[1]->code.")";
                     };
                   };
                 };

@@ -30,12 +30,8 @@ my %d = %{$data};
 
 is(length($d{id}), 32, 'ID has 32 characters');
 
-for (qw( displayName name email ageGroup lastName minorStatus )) {
+for (qw( displayName name email ageGroup lastName minorStatus country preferredLanguage )) {
   ok(length($d{$_}) > 0, $_.' has a length');
-}
-
-for (qw( company phoneNumber country preferredLanguage )) {
-  ok(exists($d{$_}), $_.' exists');
 }
 
 for (qw( canUpdateDisplayName headless minorExpected minorVerified tfaEnabled emailVerified )) {
@@ -50,6 +46,17 @@ for (qw( lastLogin )) {
   ok($d{$_} =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$/, $_.' is proper datetime format');
 }
 
-diag(JSON::MaybeXS->new( utf8 => 1, pretty => 1 )->encode($data));
+diag("Result of me request: ".(JSON::MaybeXS->new( utf8 => 1, pretty => 1 )->encode($data)));
+
+# my $egl_vault_request = $egl->account->vault();
+# isa_ok($egl_vault_request, 'WWW::EGL::Request', 'Vault Request');
+
+# my $vault = $egl_vault_request->run;
+
+# is(ref $vault, 'HASH', 'Vault result is hashref');
+
+# use DDP; p($vault);
+
+# diag(JSON::MaybeXS->new( utf8 => 1, pretty => 1 )->encode($vault));
 
 done_testing;
